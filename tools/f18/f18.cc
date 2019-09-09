@@ -108,6 +108,7 @@ struct DriverOptions {
   bool getDefinition{false};
   GetDefinitionArgs getDefinitionArgs{0, 0, 0};
   bool getSymbolsSources{false};
+  bool flangdDiagnostic{false};
 };
 
 bool ParentProcess() {
@@ -194,7 +195,8 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   if (!parsing.messages().empty() &&
       (driver.warningsAreErrors || parsing.messages().AnyFatalError())) {
     std::cerr << driver.prefix << "could not scan " << path << '\n';
-    parsing.messages().Emit(std::cerr, parsing.cooked());
+    parsing.messages().Emit(std::cerr, parsing.cooked(),
+        /*echoSourceLine*/ false, driver.flangdDiagnostic);
     exitStatus = EXIT_FAILURE;
     return {};
   }
@@ -213,10 +215,12 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     return {};
   }
   parsing.ClearLog();
-  parsing.messages().Emit(std::cerr, parsing.cooked());
+  parsing.messages().Emit(std::cerr, parsing.cooked(), /*echoSourceLine*/ false,
+      driver.flangdDiagnostic);
   if (!parsing.consumedWholeFile()) {
-    parsing.EmitMessage(
-        std::cerr, parsing.finalRestingPlace(), "parser FAIL (final position)");
+    parsing.EmitMessage(std::cerr, parsing.finalRestingPlace(),
+        "parser FAIL (final position)",
+        /*echoSourceLine*/ false, driver.flangdDiagnostic);
     exitStatus = EXIT_FAILURE;
     return {};
   }
@@ -234,11 +238,11 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
       driver.dumpUnparseWithSymbols || driver.getDefinition ||
-      driver.getSymbolsSources) {
+      driver.getSymbolsSources || driver.flangdDiagnostic) {
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();
-    semantics.EmitMessages(std::cerr);
+    semantics.EmitMessages(std::cerr, driver.flangdDiagnostic);
     if (driver.dumpSymbols) {
       semantics.DumpSymbols(std::cout);
     }
@@ -305,7 +309,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
         nullptr /* action before each statement */, &unparseExpression);
     return {};
   }
-  if (driver.parseOnly) {
+  if (driver.parseOnly || driver.flangdDiagnostic) {
     return {};
   }
 
@@ -538,6 +542,8 @@ int main(int argc, char *const argv[]) {
       driver.getDefinitionArgs = {arguments[0], arguments[1], arguments[2]};
     } else if (arg == "-fget-symbols-sources") {
       driver.getSymbolsSources = true;
+    } else if (arg == "-fflangd-diagnostic") {
+      driver.flangdDiagnostic = true;
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       std::cerr
           << "f18 options:\n"
@@ -567,6 +573,7 @@ int main(int argc, char *const argv[]) {
           << "  -fdebug-semantics    perform semantic checks\n"
           << "  -fget-definition\n"
           << "  -fget-symbols-sources\n"
+          << "  -fflangd-diagnostic  emits flangd diagnostic information"
           << "  -v -c -o -I -D -U    have their usual meanings\n"
           << "  -help                print this again\n"
           << "Other options are passed through to the compiler.\n";

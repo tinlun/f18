@@ -223,8 +223,9 @@ bool Semantics::Perform() {
       ModFileWriter{context_}.WriteAll();
 }
 
-void Semantics::EmitMessages(std::ostream &os) const {
-  context_.messages().Emit(os, cooked_);
+void Semantics::EmitMessages(std::ostream &os, bool flangdDiagnostic) const {
+  context_.messages().Emit(
+      os, cooked_, /*echoSourceLines*/ false, flangdDiagnostic);
 }
 
 void Semantics::DumpSymbols(std::ostream &os) {

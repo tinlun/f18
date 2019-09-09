@@ -179,7 +179,7 @@ public:
     return context_.FindScope(where);
   }
   bool AnyFatalError() const { return context_.AnyFatalError(); }
-  void EmitMessages(std::ostream &) const;
+  void EmitMessages(std::ostream &, bool flangdDiagnostic = false) const;
   void DumpSymbols(std::ostream &);
   void DumpSymbolsSources(std::ostream &) const;
 

@@ -261,6 +261,11 @@ set(GETDEFINITION_TESTS
   getdefinition05.f90
 )
 
+set(DIAGNOSTIC_TESTS
+  diagnostics01.f90
+  diagnostics02.f90
+)
+
 set(F18 $<TARGET_FILE:f18>)
 
 foreach(test ${ERROR_TESTS})
@@ -278,8 +283,9 @@ foreach(test ${MODFILE_TESTS})
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_modfile.sh ${test} ${F18})
 endforeach()
 
-foreach(test ${LABEL_TESTS} ${CANONDO_TESTS} ${DOCONCURRENT_TESTS} 
-             ${FORALL_TESTS} ${GETSYMBOLS_TESTS} ${GETDEFINITION_TESTS})
+foreach(test ${LABEL_TESTS} ${CANONDO_TESTS} ${DOCONCURRENT_TESTS}
+             ${FORALL_TESTS} ${GETSYMBOLS_TESTS} ${GETDEFINITION_TESTS}
+             ${DIAGNOSTIC_TESTS})
   add_test(NAME ${test}
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test} ${F18})
 endforeach()

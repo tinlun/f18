@@ -63,9 +63,14 @@ public:
   void ClearLog();
 
   void EmitMessage(std::ostream &o, const char *at, const std::string &message,
-      bool echoSourceLine = false) const {
-    cooked_.allSources().EmitMessage(
-        o, cooked_.GetProvenanceRange(CharBlock(at)), message, echoSourceLine);
+      bool echoSourceLine = false, bool flangdDiagnostic = false) const {
+    if (flangdDiagnostic) {
+      cooked_.allSources().EmitDiagnosticMessage(
+          o, cooked_.GetProvenanceRange(CharBlock(at)), message);
+    } else {
+      cooked_.allSources().EmitMessage(o,
+          cooked_.GetProvenanceRange(CharBlock(at)), message, echoSourceLine);
+    }
   }
 
   bool ForTesting(std::string path, std::ostream &);

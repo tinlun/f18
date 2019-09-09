@@ -282,6 +282,36 @@ void AllSources::EmitMessage(std::ostream &o,
       origin.u);
 }
 
+void AllSources::EmitDiagnosticMessage(std::ostream &o,
+    const std::optional<ProvenanceRange> &range,
+    const std::string &message) const {
+  // Custom message emitter used for flangd diagnostic.
+  if (!range.has_value()) {
+    o << message << '\n';
+    return;
+  }
+  CHECK(IsValid(*range));
+  const Origin &origin{MapToOrigin(range->start())};
+  std::visit(common::visitors{
+                 [&](const Inclusion &inc) {
+                   std::size_t startOffset{
+                       origin.covers.MemberOffset(range->start())};
+                   SourcePosition startPos{
+                       inc.source.FindOffsetLineAndColumn(startOffset)};
+                   // endOffset is exclusive.
+                   auto last{range->start() + range->size()};
+                   std::size_t endOffset{origin.covers.MemberOffset(last)};
+                   SourcePosition endPos{
+                       inc.source.FindOffsetLineAndColumn(endOffset)};
+                   o << inc.source.path() << ':' << startPos.line << ','
+                     << startPos.column << ':' << endPos.line << ','
+                     << endPos.column << ':' << message << '\n';
+                 },
+                 [&](const Macro &) {},
+                 [&](const CompilerInsertion &) {},
+             },
+      origin.u);
+}
 const SourceFile *AllSources::GetSourceFile(
     Provenance at, std::size_t *offset) const {
   const Origin &origin{MapToOrigin(at)};

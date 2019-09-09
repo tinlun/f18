@@ -171,6 +171,8 @@ public:
   }
   void EmitMessage(std::ostream &, const std::optional<ProvenanceRange> &,
       const std::string &message, bool echoSourceLine = false) const;
+  void EmitDiagnosticMessage(std::ostream &,
+      const std::optional<ProvenanceRange> &, const std::string &message) const;
   const SourceFile *GetSourceFile(
       Provenance, std::size_t *offset = nullptr) const;
   std::optional<SourcePosition> GetSourcePosition(Provenance) const;
