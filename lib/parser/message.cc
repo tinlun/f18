@@ -233,6 +233,21 @@ void Message::Emit(
   }
 }
 
+void Message::EmitDiagnostic(
+    std::ostream &o, const CookedSource &cooked) const {
+  // Custom message emitter used for flangd diagnostic.
+  std::optional<ProvenanceRange> provenanceRange{GetProvenanceRange(cooked)};
+  std::string text;
+  if (IsFatal()) {
+    o << "error:";
+  } else {
+    o << "warning:";
+  }
+  text += ToString();
+  const AllSources &sources{cooked.allSources()};
+  sources.EmitDiagnosticMessage(o, provenanceRange, text);
+}
+
 bool Message::Merge(const Message &that) {
   return AtSameLocation(that) &&
       (!that.attachment_.get() ||
@@ -316,8 +331,8 @@ void Messages::ResolveProvenances(const CookedSource &cooked) {
   }
 }
 
-void Messages::Emit(
-    std::ostream &o, const CookedSource &cooked, bool echoSourceLines) const {
+void Messages::Emit(std::ostream &o, const CookedSource &cooked,
+    bool echoSourceLines, bool flangdDiagnostic) const {
   std::vector<const Message *> sorted;
   for (const auto &msg : messages_) {
     sorted.push_back(&msg);
@@ -325,7 +340,11 @@ void Messages::Emit(
   std::stable_sort(sorted.begin(), sorted.end(),
       [](const Message *x, const Message *y) { return x->SortBefore(*y); });
   for (const Message *msg : sorted) {
-    msg->Emit(o, cooked, echoSourceLines);
+    if (flangdDiagnostic) {
+      msg->EmitDiagnostic(o, cooked);
+    } else {
+      msg->Emit(o, cooked, echoSourceLines);
+    }
   }
 }
 
