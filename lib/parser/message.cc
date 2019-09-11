@@ -239,9 +239,9 @@ void Message::EmitDiagnostic(
   std::optional<ProvenanceRange> provenanceRange{GetProvenanceRange(cooked)};
   std::string text;
   if (IsFatal()) {
-    o << "error:";
+    text += "error:";
   } else {
-    o << "warning:";
+    text += "warning:";
   }
   text += ToString();
   const AllSources &sources{cooked.allSources()};

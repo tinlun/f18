@@ -18,4 +18,4 @@ integer
 end
 
 ! RUN: ${F18} -fflangd-diagnostic %s 2>&1 | ${FileCheck} %s
-! CHECK:error:.*diagnostics02.f90:17,8:18,1:expected '\\('
+! CHECK:.*diagnostics02.f90:17,8:18,1:error:expected '\\('

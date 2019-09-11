@@ -23,5 +23,5 @@ real :: k
 end
 
 ! RUN: ${F18} -fflangd-diagnostic %s 2>&1 | ${FileCheck} %s
-! CHECK:error:.*diagnostics01.f90:18,9:18,10:The type of 'x' has already been declared
-! CHECK:error:.*diagnostics01.f90:22,9:22,10:The type of 'k' has already been implicitly declared
+! CHECK:.*diagnostics01.f90:18,9:18,10:error:The type of 'x' has already been declared
+! CHECK:.*diagnostics01.f90:22,9:22,10:error:The type of 'k' has already been implicitly declared

@@ -195,8 +195,12 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   if (!parsing.messages().empty() &&
       (driver.warningsAreErrors || parsing.messages().AnyFatalError())) {
     std::cerr << driver.prefix << "could not scan " << path << '\n';
-    parsing.messages().Emit(std::cerr, parsing.cooked(),
-        /*echoSourceLine*/ false, driver.flangdDiagnostic);
+    if(driver.flangdDiagnostic) {
+      parsing.messages().Emit(std::cout, parsing.cooked(),
+        /*echoSourceLine*/ false, /* flangdDiagnostic */ true);
+    } else {
+      parsing.messages().Emit(std::cerr, parsing.cooked());
+    }
     exitStatus = EXIT_FAILURE;
     return {};
   }
@@ -215,12 +219,22 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     return {};
   }
   parsing.ClearLog();
-  parsing.messages().Emit(std::cerr, parsing.cooked(), /*echoSourceLine*/ false,
-      driver.flangdDiagnostic);
+  if(driver.flangdDiagnostic) {
+    parsing.messages().Emit(std::cout, parsing.cooked(),
+      /*echoSourceLine*/ false, /* flangdDiagnostic */ true);
+  }
+  else {
+    parsing.messages().Emit(std::cerr, parsing.cooked());
+  }
   if (!parsing.consumedWholeFile()) {
-    parsing.EmitMessage(std::cerr, parsing.finalRestingPlace(),
-        "parser FAIL (final position)",
-        /*echoSourceLine*/ false, driver.flangdDiagnostic);
+    if(driver.flangdDiagnostic) {
+      parsing.EmitMessage(std::cout, parsing.finalRestingPlace(),
+          "parser FAIL (final position)",
+          /*echoSourceLine*/ false, /* flangdDiagnostic */ true);
+    } else {
+      parsing.EmitMessage(std::cerr, parsing.finalRestingPlace(),
+          "parser FAIL (final position)");
+    }
     exitStatus = EXIT_FAILURE;
     return {};
   }
@@ -242,7 +256,11 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();
-    semantics.EmitMessages(std::cerr, driver.flangdDiagnostic);
+    if(driver.flangdDiagnostic) {
+      semantics.EmitMessages(std::cout, /* flangdDiagnostic */ true);
+    } else {
+      semantics.EmitMessages(std::cerr);
+    }
     if (driver.dumpSymbols) {
       semantics.DumpSymbols(std::cout);
     }
